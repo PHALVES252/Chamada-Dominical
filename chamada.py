@@ -9,28 +9,31 @@ alunos = [
     "OsValdina Francisca", "Paulo Henrique", "João Vitor", "Elza Alves",
     "Antonio Patricio", "Gesmindo Boostel", "Kalahan Boostel", "Geciel Polegario",
     "Diana", "Vanuza Nascimento", "Welington Nascimento", "Welington Ribeiro",
-    "Jorge", "Gosmira"," Almir Rodrigues"
+    "Jorge", "Gosmira", "Almir Rodrigues"
 ]
+
+# normaliza nomes (remove espaços no início/fim)
+alunos = [a.strip() for a in alunos]
 
 checkboxes = {}
 
 def validar_data(data_str):
     try:
-        datetime.strptime(data_str, "%d/%m/%Y")
-        return True
+        return datetime.strptime(data_str, "%d/%m/%Y")
     except ValueError:
-        return False
+        return None
 
 def salvar_chamada():
-    data = entrada_data.get().strip()
-
-    if not validar_data(data):
+    data_str = entrada_data.get().strip()
+    data_dt = validar_data(data_str)
+    if not data_dt:
         messagebox.showerror("Erro", "Digite a data no formato DD/MM/AAAA.")
         return
 
+    data_fmt = data_dt.strftime("%d/%m/%Y")  # formato padronizado para comparar/salvar
     arquivo = "chamada.xlsx"
-    nova_chamada = []
 
+    # Abre ou cria o arquivo
     if os.path.exists(arquivo):
         try:
             wb = load_workbook(arquivo)
@@ -44,24 +47,34 @@ def salvar_chamada():
         ws.title = "Chamada"
         ws.append(["Nome", "Presença", "Data"])
 
-    # Coletar registros existentes
+    # coleta registros existentes (normalizando nome e data lida)
     registros_existentes = set()
     for row in ws.iter_rows(min_row=2, values_only=True):
-        nome, _, data_registro = row
-        registros_existentes.add((nome, data_registro))
+        if not row or row[0] is None:
+            continue
+        nome_row = str(row[0]).strip()
+        # pega a coluna data (index 2) se existir
+        data_registro = row[2] if len(row) > 2 else None
+        if isinstance(data_registro, datetime):
+            data_row = data_registro.strftime("%d/%m/%Y")
+        else:
+            data_row = str(data_registro).strip() if data_registro is not None else ""
+        registros_existentes.add((nome_row, data_row))
 
+    novos = 0
     for nome, var in checkboxes.items():
         status = "Presente" if var.get() else "Ausente"
-        if (nome, data) not in registros_existentes:
-            ws.append([nome, status, data])
+        if (nome, data_fmt) not in registros_existentes:
+            ws.append([nome, status, data_fmt])
+            novos += 1
 
     wb.save(arquivo)
 
-    # Limpa as seleções após salvar
+    # limpa seleções
     for var in checkboxes.values():
         var.set(False)
 
-    messagebox.showinfo("Sucesso", "Chamada registrada com sucesso!")
+    messagebox.showinfo("Sucesso", f"Chamada registrada com sucesso! ({novos} novos registros adicionados)")
 
 # Interface
 root = tk.Tk()
@@ -78,7 +91,6 @@ for nome in alunos:
     chk.pack(anchor='w')
     checkboxes[nome] = var
 
-# Campo de data
 frame_data = tk.Frame(root)
 frame_data.pack(pady=10)
 
