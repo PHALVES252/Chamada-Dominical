@@ -8,7 +8,7 @@ import os
 alunos = [
     "OsValdina Francisca", "Paulo Henrique", "João Vitor", "Elza Alves",
     "Antonio Patricio", "Gesmindo Boostel", "Kalahan Boostel", "Geciel Polegario",
-    "Diana", "Vanuza Nascimento", "Welington Nascimento", "Welington Ribeiro",
+    "Diana", "Vanuza Nascimento", "Welington Nascimento",
     "Jorge", "Gosmira", "Almir Rodrigues","Herminio","Maria do Carmo","Laide"
 ]
 
